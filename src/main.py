@@ -1,6 +1,7 @@
-def main():
-    print("Hello from booking!")
+from fastapi import FastAPI
+from src.routers import table_router, reservation_router
 
+app = FastAPI()
 
-if __name__ == "__main__":
-    main()
+app.include_router(table_router, prefix="/tables", tags=["tables"])
+app.include_router(reservation_router, prefix="/reservations", tags=["reservations"])
