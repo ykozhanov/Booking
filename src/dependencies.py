@@ -1,20 +1,18 @@
 from fastapi import Depends
 
-from src.services.table_service import TableService
-from src.services.reservation_service import ReservationService
-from src.repositories.table_repository import TableRepository
-from src.repositories.reservation_repository import ReservationRepository
+from src.services import TableAsyncService, ReservationAsyncService
+from src.repositories import SQLAlchemyAsyncTableRepository, SQLAlchemyAsyncReservationRepository
 from src.db import get_session
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
 # Зависимость для сервиса столиков
-def get_table_service(db: AsyncSession = Depends(get_session)) -> TableService:
-    return TableService(TableRepository(db))
+def get_table_async_service(db: AsyncSession = Depends(get_session)) -> TableAsyncService:
+    return TableAsyncService(SQLAlchemyAsyncTableRepository(db))
 
 
 # Зависимость для сервиса бронирований
-def get_reservation_service(
+def get_reservation_async_service(
     db: AsyncSession = Depends(get_session),
-) -> ReservationService:
-    return ReservationService(ReservationRepository(db))
+) -> ReservationAsyncService:
+    return ReservationAsyncService(SQLAlchemyAsyncReservationRepository(db))

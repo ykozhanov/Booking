@@ -1,4 +1,15 @@
-from .table_repository import TableRepository
-from .reservation_repository import ReservationRepository
+from .table_repository import (
+    SQLAlchemyAsyncTableRepository,
+    TableAsyncRepositoryInterface,
+)
+from .reservation_repository import (
+    SQLAlchemyAsyncReservationRepository,
+    ReservationAsyncRepositoryInterface,
+)
 
-__all__ = [TableRepository, ReservationRepository]
+__all__ = [
+    ReservationAsyncRepositoryInterface,
+    TableAsyncRepositoryInterface,
+    SQLAlchemyAsyncTableRepository,
+    SQLAlchemyAsyncReservationRepository,
+]

@@ -1,14 +1,14 @@
 from fastapi import APIRouter, HTTPException, Depends
 from src.schemas import TableCreateSchema, TableResponseSchema
-from src.services.table_service import TableService
-from src.dependencies import get_table_service
+from src.services import TableAsyncService
+from src.dependencies import get_table_async_service
 from src.exceptions import DomainException, NotFoundException
 
 router = APIRouter()
 
 
 @router.get("/", response_model=list(TableResponseSchema))
-async def get_tables(service: TableService = Depends(get_table_service)):
+async def get_tables(service: TableAsyncService = Depends(get_table_async_service)):
     try:
         return await service.get_all_tables()
     except DomainException as e:
@@ -17,7 +17,7 @@ async def get_tables(service: TableService = Depends(get_table_service)):
 
 @router.post("/", response_model=TableResponseSchema, status_code=201)
 async def create_table(
-    table: TableCreateSchema, service: TableService = Depends(get_table_service)
+    table: TableCreateSchema, service: TableAsyncService = Depends(get_table_async_service)
 ) -> TableResponseSchema:
     try:
         return await service.create_table(table)
@@ -27,7 +27,7 @@ async def create_table(
 
 @router.delete("/{table_id}", response_model=dict[str, str])
 async def delete_table(
-    table_id: int, service: TableService = Depends(get_table_service)
+    table_id: int, service: TableAsyncService = Depends(get_table_async_service)
 ):
     try:
         await service.delete_table(table_id)

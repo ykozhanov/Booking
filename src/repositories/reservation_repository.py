@@ -1,3 +1,5 @@
+from abc import ABC, abstractmethod
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.models import Reservation
 from src.exceptions import ReservationNotFoundException
@@ -9,7 +11,36 @@ from src.schemas import (
 )
 
 
-class ReservationRepository:
+class ReservationAsyncRepositoryInterface(ABC):
+    @abstractmethod
+    async def create(self, reservation: ReservationCreateSchema) -> Reservation:
+        """Добавить новую бронь. Возвращает объект Reservation."""
+        pass
+
+    @abstractmethod
+    async def get_by_id(self, reservation_id: int) -> Reservation:
+        """Найти бронь по ID. Выбрасывает исключение ReservationNotFoundException если не найдена."""
+        pass
+
+    @abstractmethod
+    async def get_all(self) -> list[Reservation]:
+        """Получить все брони."""
+        pass
+
+    @abstractmethod
+    async def update(self, update_reservation: ReservationUpdateSchema) -> Reservation:
+        """Обновить бронь. Возвращает обновленный объект Reservation."""
+        pass
+
+    @abstractmethod
+    async def get_reservations_for_table_by_time(
+        self, reservation: ReservationCreateSchema
+    ) -> list[Reservation]:
+        """Получить все брони для столика в заданном временном промежутке."""
+        pass
+
+
+class SQLAlchemyAsyncReservationRepository(ReservationAsyncRepositoryInterface):
     def __init__(self, session: AsyncSession):
         self.session = session
 

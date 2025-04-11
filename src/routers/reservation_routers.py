@@ -3,15 +3,15 @@ from src.schemas import (
     ReservationCreateSchema,
     ReservationResponseSchema,
 )
-from src.services.reservation_service import ReservationService
-from src.dependencies import get_reservation_service
+from src.services import ReservationAsyncService
+from src.dependencies import get_reservation_async_service
 from src.exceptions import DomainException, NotFoundException
 
 router = APIRouter()
 
 
 @router.get("/", response_model=list(ReservationResponseSchema))
-async def get_tables(service: ReservationService = Depends(get_reservation_service)):
+async def get_tables(service: ReservationAsyncService = Depends(get_reservation_async_service)):
     try:
         return await service.get_all_reservations()
     except DomainException as e:
@@ -23,7 +23,7 @@ async def get_tables(service: ReservationService = Depends(get_reservation_servi
 )
 async def create_reservation(
     reservation: ReservationCreateSchema,
-    service: ReservationService = Depends(get_reservation_service),
+    service: ReservationAsyncService = Depends(get_reservation_async_service),
 ):
     try:
         return await service.create_reservation(reservation)
@@ -33,7 +33,7 @@ async def create_reservation(
 
 @router.delete("/{reservation_id}", response_model=dict[str, str])
 async def delete_reservation(
-    reservation_id: int, service: ReservationService = Depends(get_reservation_service)
+    reservation_id: int, service: ReservationAsyncService = Depends(get_reservation_async_service)
 ):
     try:
         await service.delete_reservation(reservation_id)

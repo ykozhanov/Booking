@@ -1,9 +1,9 @@
-from src.repositories import TableRepository
+from src.repositories import TableAsyncRepositoryInterface
 from src.schemas import TableCreateSchema, TableUpdateSchema, TableResponseSchema
 
 
-class TableService:
-    def __init__(self, table_repository: TableRepository):
+class TableAsyncService:
+    def __init__(self, table_repository: TableAsyncRepositoryInterface):
         self.table_repository = table_repository
 
     async def get_all_tables(self) -> list[TableResponseSchema]:

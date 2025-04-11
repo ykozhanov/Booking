@@ -1,4 +1,4 @@
-from src.repositories.reservation_repository import ReservationRepository
+from src.repositories import ReservationAsyncRepositoryInterface
 from src.schemas import (
     ReservationUpdateSchema,
     ReservationCreateSchema,
@@ -7,8 +7,8 @@ from src.schemas import (
 from src.exceptions import ReservationConflictException
 
 
-class ReservationService:
-    def __init__(self, reservation_repository: ReservationRepository):
+class ReservationAsyncService:
+    def __init__(self, reservation_repository: ReservationAsyncRepositoryInterface):
         self.reservation_repository = reservation_repository
 
     async def get_all_reservations(self) -> list[ReservationResponseSchema]:
