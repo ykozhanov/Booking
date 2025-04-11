@@ -5,7 +5,6 @@ from src.exceptions import ValidationException
 
 
 class TableCreateSchema(BaseModel):
-    customer_name: str
     name: str
     seats: int = Field(..., gt=0)
     location: str

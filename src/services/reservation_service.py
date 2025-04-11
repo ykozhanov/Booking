@@ -4,7 +4,6 @@ from src.schemas import (
     ReservationCreateSchema,
     ReservationResponseSchema,
 )
-from src.exceptions import ReservationConflictException
 
 
 class ReservationAsyncService:
@@ -16,26 +15,10 @@ class ReservationAsyncService:
         reservations = await self.reservation_repository.get_all()
         return [ReservationResponseSchema.model_validate(r) for r in reservations]
 
-    async def _check_conflicts_reservations(
-        self, reservation: ReservationCreateSchema
-    ) -> None:
-        """
-        Проверить наличие конфликтующих броней.
-        В случае конфликта времени выбросит исключение ReservationConflictException.
-        """
-        existing_reservations = (
-            await self.reservation_repository.get_reservations_for_table_by_time(
-                reservation
-            )
-        )
-        if existing_reservations:
-            raise ReservationConflictException()
-
     async def create_reservation(
         self, reservation: ReservationCreateSchema
     ) -> ReservationResponseSchema:
         """Создать новую бронь."""
-        await self._check_conflicts_reservations(reservation)
         new_reservation = await self.reservation_repository.create(reservation)
         return ReservationResponseSchema.model_validate(new_reservation)
 

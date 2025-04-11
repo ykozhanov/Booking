@@ -11,9 +11,11 @@ class NotFoundException(DomainException):
     code = "not_found"
     message = "Ресурс не найден"
 
+
 class DeletedException(DomainException):
     code = "delete_error"
     message = "Не удалось удалить объект"
+
 
 class ValidationException(DomainException):
     code = "validation_failed"

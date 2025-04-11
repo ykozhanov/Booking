@@ -1,3 +1,4 @@
+from sqlalchemy import CheckConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 from src.db import Base
 
@@ -7,5 +8,5 @@ class Table(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str]
-    seats: Mapped[int]
+    seats: Mapped[int] = mapped_column(CheckConstraint("seats > 0"))
     location: Mapped[str]

@@ -1,4 +1,4 @@
-from . import DomainException, NotFoundException
+from . import DomainException, NotFoundException, DeletedException
 
 
 class ReservationConflictException(DomainException):
@@ -12,5 +12,8 @@ class InvalidReservationTimeException(DomainException):
 
 
 class ReservationNotFoundException(NotFoundException):
-    code = "reservation_not_found"
     message = "Бронь не найдена"
+
+
+class ReservationDeletedException(DeletedException):
+    message = "Не удалось удалить бронь"

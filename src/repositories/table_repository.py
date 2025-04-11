@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from src.models import Table, Reservation
-from src.exceptions import TableNotFoundException, DeletedException
+from src.exceptions import TableNotFoundException, TableDeletedException
 from src.schemas import TableCreateSchema, TableUpdateSchema
 
 
@@ -62,7 +62,7 @@ class SQLAlchemyAsyncTableRepository(TableAsyncRepositoryInterface):
             select(Reservation).filter(Reservation.table_id == table_id)
         )
         if reservations:
-            raise DeletedException("Нельзя удалить стол пока у него есть бронь.")
+            raise TableDeletedException("Нельзя удалить стол пока у него есть бронь.")
 
     async def delete(self, table_id: int) -> None:
         table = await self.get_by_id(table_id)

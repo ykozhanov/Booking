@@ -1,12 +1,15 @@
 from . import DomainException, NotFoundException, DeletedException
 
 class TableNotFoundException(NotFoundException):
-    code = "table_not_found"
     message = "Столик не найден"
 
 class TableSeatsLimitException(DomainException):
     code = "seats_limit_exceeded"
     message = "Недостаточно мест за столиком"
 
-class TableHasReservationsException(DeletedException):
+class TableHasReservationsException(DomainException):
+    code = "table_has_reservations"
     message = "Столик забронирован"
+
+class TableDeletedException(DeletedException):
+    message = "Не удалось удалить столик"
