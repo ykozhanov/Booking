@@ -1,6 +1,6 @@
 from sqlalchemy import CheckConstraint
 from sqlalchemy.orm import Mapped, mapped_column
-from src.db import Base
+from src.core.db import Base
 
 
 class Table(Base):

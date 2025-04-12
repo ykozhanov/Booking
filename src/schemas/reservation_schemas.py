@@ -2,7 +2,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, field_validator, Field
 from datetime import datetime, UTC
-from src.exceptions import ValidationException
+
 
 
 class ReservationCreateSchema(BaseModel):
@@ -15,7 +15,7 @@ class ReservationCreateSchema(BaseModel):
     @classmethod
     def validate_reservation_time(cls, v: Any):
         if v and v < datetime.now(UTC):
-            raise ValidationException("Время бронирования не может быть в прошлом.")
+            raise ValueError("Время бронирования не может быть в прошлом.")
         return v
 
 
@@ -30,14 +30,14 @@ class ReservationUpdateSchema(BaseModel):
     @classmethod
     def validate_reservation_time(cls, v: Any):
         if v and v < datetime.now(UTC):
-            raise ValidationException("Время бронирования не может быть в прошлом.")
+            raise ValueError("Время бронирования не может быть в прошлом.")
         return v
 
     @field_validator("duration_minutes")
     @classmethod
     def validate_seats(cls, v: Any):
         if v is not None and v <= 0:
-            raise ValidationException("Длительность брони должна быть больше 0.")
+            raise ValueError("Длительность брони должна быть больше 0.")
         return v
 
 

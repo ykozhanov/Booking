@@ -4,6 +4,7 @@ from .reservation_schemas import (
     ReservationUpdateSchema,
 )
 from .table_schemas import TableCreateSchema, TableUpdateSchema, TableResponseSchema
+from .errors_schemas import ErrorResponseSchema, ValidationErrorResponseSchema
 
 __all__ = [
     ReservationCreateSchema,
@@ -12,4 +13,6 @@ __all__ = [
     TableUpdateSchema,
     TableResponseSchema,
     TableCreateSchema,
+    ErrorResponseSchema,
+    ValidationErrorResponseSchema,
 ]

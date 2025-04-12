@@ -1,7 +1,6 @@
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
-from src.exceptions import ValidationException
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class TableCreateSchema(BaseModel):
@@ -20,7 +19,7 @@ class TableUpdateSchema(BaseModel):
     @classmethod
     def validate_seats(cls, v: Any):
         if v is not None and v <= 0:
-            raise ValidationException("Мест за столом должно быть больше 0.")
+            raise ValueError("Мест за столом должно быть больше 0.")
         return v
 
 

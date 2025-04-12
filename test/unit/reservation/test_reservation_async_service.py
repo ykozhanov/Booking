@@ -41,7 +41,9 @@ async def test_create_reservation_conflict():
 
     mock_repo = AsyncMock(spec=SQLAlchemyAsyncReservationRepository)
 
-    mock_repo.create.side_effect = ReservationConflictException(ReservationConflictException.message)
+    mock_repo.create.side_effect = ReservationConflictException(
+        ReservationConflictException.message
+    )
 
     service = ReservationAsyncService(mock_repo)
 

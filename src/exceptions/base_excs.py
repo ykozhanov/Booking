@@ -1,5 +1,6 @@
 class DomainException(Exception):
     code: str = "domain_error"
+    status_code = 400
     message: str = "Нарушение бизнес-правила"
 
     def __init__(self, message: str | None = None, **kwargs):
@@ -9,6 +10,7 @@ class DomainException(Exception):
 
 class NotFoundException(DomainException):
     code = "not_found"
+    status_code = 404
     message = "Ресурс не найден"
 
 
