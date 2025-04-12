@@ -4,7 +4,15 @@ from src.core.config import get_settings
 
 settings = get_settings()
 
-engine = create_async_engine(settings.get_database_url(), echo=settings.DEBUG)
+engine = create_async_engine(
+    settings.get_database_url(),
+    echo=settings.DEBUG,
+    connect_args={
+        "server_settings": {
+            "timezone": "UTC",
+        }
+    }
+)
 
 AsyncSessionLocal = async_sessionmaker(bind=engine, expire_on_commit=False)
 

@@ -49,7 +49,7 @@ async def create_reservation(
     service: ReservationAsyncService = Depends(get_reservation_async_service),
 ) -> ReservationResponseSchema:
     """
-    Создать новую бронь. Время должно быть в ISO формате с таймзоной (например: 2025-01-01T00:00:01Z), без миллисекунд
+    Создать новую бронь. Время должно быть в ISO формате с таймзоной (например: 2025-01-01T00:00:01Z)
     """
     return await service.create_reservation(reservation)
 

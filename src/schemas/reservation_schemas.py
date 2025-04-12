@@ -13,14 +13,14 @@ class ReservationCreateSchema(BaseModel):
     def validate_reservation_time(cls, v: datetime):
         if v.tzinfo is None:
             raise ValueError(
-                "Время должно быть в ISO формате с таймзоной (например: 2025-01-01T00:00:01Z), без миллисекунд"
+                "Время должно быть в ISO формате с таймзоной (например: 2025-01-01T00:00:01Z)"
             )
 
         v_utc = v.astimezone(timezone.utc)
         if v_utc < datetime.now(timezone.utc):
             raise ValueError("Время бронирования не может быть в прошлом.")
 
-        return v.replace(tzinfo=None)
+        return v_utc
 
 
 class ReservationUpdateSchema(BaseModel):
@@ -36,14 +36,14 @@ class ReservationUpdateSchema(BaseModel):
         if v:
             if v.tzinfo is None:
                 raise ValueError(
-                    "Время должно быть в ISO формате с таймзоной (например: 2025-01-01T00:00:01Z), без миллисекунд"
+                    "Время должно быть в ISO формате с таймзоной (например: 2025-01-01T00:00:01Z)"
                 )
 
             v_utc = v.astimezone(timezone.utc)
             if v_utc < datetime.now(timezone.utc):
                 raise ValueError("Время бронирования не может быть в прошлом.")
 
-            return v.replace(tzinfo=None)
+            return v_utc
 
 
 class ReservationResponseSchema(ReservationCreateSchema):

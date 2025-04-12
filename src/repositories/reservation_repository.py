@@ -7,7 +7,7 @@ from src.exceptions import (
     ReservationConflictException,
     TableNotFoundException,
 )
-from sqlalchemy import select
+from sqlalchemy import select, func, DateTime, Interval
 from datetime import timedelta
 from src.schemas import (
     ReservationCreateSchema,
@@ -54,14 +54,13 @@ class SQLAlchemyAsyncReservationRepository(ReservationAsyncRepositoryInterface):
         result = await self.session.execute(
             select(Reservation).filter(
                 Reservation.table_id == reservation.table_id,
-                Reservation.reservation_time < new_end,
-                Reservation.reservation_time
-                + timedelta(minutes=reservation.duration_minutes)
-                > new_start,
+                Reservation.reservation_time < func.cast(new_end, DateTime(timezone=True)),
+                func.cast(Reservation.reservation_time, DateTime(timezone=True)) +
+                func.cast(timedelta(minutes=reservation.duration_minutes), Interval) >
+                func.cast(reservation.reservation_time, DateTime(timezone=True))
             )
         )
-        reservations = result.scalars().first()
-        if reservations:
+        if result.scalars().first():
             raise ReservationConflictException()
 
     async def _check_exists_table_by_id(self, table_id: int) -> None:
