@@ -1,8 +1,5 @@
-from typing import Any
-
 from pydantic import BaseModel, ConfigDict, field_validator, Field
-from datetime import datetime, UTC
-
+from datetime import datetime, timezone
 
 
 class ReservationCreateSchema(BaseModel):
@@ -13,10 +10,17 @@ class ReservationCreateSchema(BaseModel):
 
     @field_validator("reservation_time")
     @classmethod
-    def validate_reservation_time(cls, v: Any):
-        if v and v < datetime.now(UTC):
+    def validate_reservation_time(cls, v: datetime):
+        if v.tzinfo is None:
+            raise ValueError(
+                "Время должно быть в ISO формате с таймзоной (например: 2025-01-01T00:00:01Z), без миллисекунд"
+            )
+
+        v_utc = v.astimezone(timezone.utc)
+        if v_utc < datetime.now(timezone.utc):
             raise ValueError("Время бронирования не может быть в прошлом.")
-        return v
+
+        return v.replace(tzinfo=None)
 
 
 class ReservationUpdateSchema(BaseModel):
@@ -24,21 +28,22 @@ class ReservationUpdateSchema(BaseModel):
     customer_name: str | None = None
     table_id: int | None = None
     reservation_time: datetime | None = None
-    duration_minutes: int | None = None
+    duration_minutes: int | None = Field(None, gt=0)
 
     @field_validator("reservation_time")
     @classmethod
-    def validate_reservation_time(cls, v: Any):
-        if v and v < datetime.now(UTC):
-            raise ValueError("Время бронирования не может быть в прошлом.")
-        return v
+    def validate_reservation_time(cls, v: datetime | None):
+        if v:
+            if v.tzinfo is None:
+                raise ValueError(
+                    "Время должно быть в ISO формате с таймзоной (например: 2025-01-01T00:00:01Z), без миллисекунд"
+                )
 
-    @field_validator("duration_minutes")
-    @classmethod
-    def validate_seats(cls, v: Any):
-        if v is not None and v <= 0:
-            raise ValueError("Длительность брони должна быть больше 0.")
-        return v
+            v_utc = v.astimezone(timezone.utc)
+            if v_utc < datetime.now(timezone.utc):
+                raise ValueError("Время бронирования не может быть в прошлом.")
+
+            return v.replace(tzinfo=None)
 
 
 class ReservationResponseSchema(ReservationCreateSchema):

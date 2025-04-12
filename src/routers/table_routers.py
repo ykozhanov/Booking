@@ -1,26 +1,32 @@
-from typing import Dict, List
+from typing import List
 
-from fastapi import APIRouter, HTTPException, Depends
-from src.schemas import TableCreateSchema, TableResponseSchema
+from fastapi import APIRouter, Depends
+from src.schemas import (
+    TableCreateSchema,
+    TableResponseSchema,
+    ResponseSchema,
+    ValidationErrorResponseSchema,
+)
 from src.services import TableAsyncService
 from src.dependencies import get_table_async_service
-from src.exceptions import DomainException, NotFoundException
 
 router = APIRouter()
 
 
 @router.get(
-    "/", response_model=List[TableResponseSchema], summary="Получить все столики"
+    "/",
+    response_model=List[TableResponseSchema],
+    summary="Получить все столики",
+    responses={
+        200: {"description": "Успешный ответ"},
+        500: {"description": "Внутренняя ошибка сервера", "model": ResponseSchema},
+    },
 )
-async def get_tables(service: TableAsyncService = Depends(get_table_async_service)):
+async def get_tables(
+    service: TableAsyncService = Depends(get_table_async_service),
+) -> list[TableResponseSchema]:
     """Получить все столики"""
-    try:
-        return await service.get_all_tables()
-    except DomainException as e:
-        raise HTTPException(status_code=400, detail=e.details)
-    except Exception as e:
-        #TODO Настроить логирование ошибок + тех, что выше
-        raise HTTPException(status_code=400, detail="Что-то пошло не так")
+    return await service.get_all_tables()
 
 
 @router.post(
@@ -28,42 +34,39 @@ async def get_tables(service: TableAsyncService = Depends(get_table_async_servic
     response_model=TableResponseSchema,
     status_code=201,
     summary="Создать новый столик",
+    responses={
+        201: {"description": "Успешное создание"},
+        422: {
+            "description": "Некорректные данные",
+            "model": ValidationErrorResponseSchema,
+        },
+        500: {"description": "Внутренняя ошибка сервера", "model": ResponseSchema},
+    },
 )
 async def create_table(
     table: TableCreateSchema,
     service: TableAsyncService = Depends(get_table_async_service),
 ) -> TableResponseSchema:
     """Создать новый столик"""
-    try:
-        return await service.create_table(table)
-    except DomainException as e:
-        raise HTTPException(status_code=400, detail=e.details)
-    except Exception as e:
-        #TODO Настроить логирование ошибок + тех, что выше
-        raise HTTPException(status_code=400, detail="Что-то пошло не так")
+    return await service.create_table(table)
 
 
 @router.delete(
     "/{table_id}",
-    response_model=Dict[str, str],
+    status_code=204,
     summary="Удалить столик по ID",
     responses={
-        404: {"description": "Столик не найден"},
+        204: {"description": "Успешное удаление"},
+        404: {"description": "Столик не найден", "model": ResponseSchema},
+        422: {
+            "description": "Некорректные данные",
+            "model": ValidationErrorResponseSchema,
+        },
+        500: {"description": "Внутренняя ошибка сервера", "model": ResponseSchema},
     },
 )
 async def delete_table(
     table_id: int, service: TableAsyncService = Depends(get_table_async_service)
-):
+) -> None:
     """Удалить столик по ID"""
-    try:
-        await service.delete_table(table_id)
-        return {"message": "Таблица успешно удалена"}
-    except DomainException as e:
-        if e.code == NotFoundException.code:
-            status_code = 404
-        else:
-            status_code = 400
-        raise HTTPException(status_code=status_code, detail=e.details)
-    except Exception as e:
-        #TODO Настроить логирование ошибок + тех, что выше
-        raise HTTPException(status_code=400, detail="Что-то пошло не так")
+    await service.delete_table(table_id)

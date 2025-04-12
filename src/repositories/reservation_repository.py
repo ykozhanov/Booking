@@ -49,16 +49,18 @@ class SQLAlchemyAsyncReservationRepository(ReservationAsyncRepositoryInterface):
     async def _check_reservations_for_table_by_time(
         self, reservation: ReservationCreateSchema
     ) -> None:
+        new_start = reservation.reservation_time
+        new_end = new_start + timedelta(minutes=reservation.duration_minutes)
         result = await self.session.execute(
             select(Reservation).filter(
                 Reservation.table_id == reservation.table_id,
-                Reservation.reservation_time <= reservation.reservation_time,
+                Reservation.reservation_time < new_end,
                 Reservation.reservation_time
-                >= reservation.reservation_time
-                + timedelta(minutes=reservation.duration_minutes),
+                + timedelta(minutes=reservation.duration_minutes)
+                > new_start,
             )
         )
-        reservations = result.scalars().all()
+        reservations = result.scalars().first()
         if reservations:
             raise ReservationConflictException()
 
@@ -69,8 +71,8 @@ class SQLAlchemyAsyncReservationRepository(ReservationAsyncRepositoryInterface):
             raise TableNotFoundException()
 
     async def create(self, reservation: ReservationCreateSchema) -> Reservation:
-        await self._check_reservations_for_table_by_time(reservation)
         await self._check_exists_table_by_id(reservation.table_id)
+        await self._check_reservations_for_table_by_time(reservation)
         new_reservation = Reservation(
             customer_name=reservation.customer_name,
             reservation_time=reservation.reservation_time,
@@ -102,8 +104,17 @@ class SQLAlchemyAsyncReservationRepository(ReservationAsyncRepositoryInterface):
 
     async def update(self, update_reservation: ReservationUpdateSchema) -> Reservation:
         reservation = await self.get_by_id(update_reservation.reservation_id)
-        if not reservation:
-            raise ReservationNotFoundException()
+
+        temp_reservation = ReservationCreateSchema(
+            customer_name=update_reservation.customer_name or reservation.customer_name,
+            table_id=update_reservation.table_id or reservation.table_id,
+            reservation_time=update_reservation.reservation_time
+            or reservation.reservation_time,
+            duration_minutes=update_reservation.duration_minutes
+            or reservation.duration_minutes,
+        )
+
+        await self._check_reservations_for_table_by_time(temp_reservation)
 
         if update_reservation.customer_name:
             reservation.customer_name = update_reservation.customer_name

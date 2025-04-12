@@ -1,31 +1,32 @@
-from typing import Dict, List
+from typing import List
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, Depends
 from src.schemas import (
     ReservationCreateSchema,
     ReservationResponseSchema,
+    ResponseSchema,
+    ValidationErrorResponseSchema,
 )
 from src.services import ReservationAsyncService
 from src.dependencies import get_reservation_async_service
-from src.exceptions import DomainException, NotFoundException
 
 router = APIRouter()
 
 
 @router.get(
-    "/", response_model=List[ReservationResponseSchema], summary="Получить все брони"
+    "/",
+    response_model=List[ReservationResponseSchema],
+    summary="Получить все брони",
+    responses={
+        200: {"description": "Успешный ответ"},
+        500: {"description": "Внутренняя ошибка сервера", "model": ResponseSchema},
+    },
 )
-async def get_tables(
+async def get_reservations(
     service: ReservationAsyncService = Depends(get_reservation_async_service),
-):
+) -> list[ReservationResponseSchema]:
     """Получить все брони"""
-    try:
-        return await service.get_all_reservations()
-    except DomainException as e:
-        raise HTTPException(status_code=400, detail=e.details)
-    except Exception as e:
-        #TODO Настроить логирование ошибок + тех, что выше
-        raise HTTPException(status_code=400, detail="Что-то пошло не так")
+    return await service.get_all_reservations()
 
 
 @router.post(
@@ -33,43 +34,43 @@ async def get_tables(
     response_model=ReservationResponseSchema,
     status_code=201,
     summary="Создать новую бронь",
+    responses={
+        201: {"description": "Успешное создание"},
+        404: {"description": "Столик для брони не найден", "model": ResponseSchema},
+        422: {
+            "description": "Некорректные данные",
+            "model": ValidationErrorResponseSchema,
+        },
+        500: {"description": "Внутренняя ошибка сервера", "model": ResponseSchema},
+    },
 )
 async def create_reservation(
     reservation: ReservationCreateSchema,
     service: ReservationAsyncService = Depends(get_reservation_async_service),
-):
-    """Создать новую бронь"""
-    try:
-        return await service.create_reservation(reservation)
-    except DomainException as e:
-        raise HTTPException(status_code=400, detail=e.details)
-    except Exception as e:
-        #TODO Настроить логирование ошибок + тех, что выше
-        raise HTTPException(status_code=400, detail=f"Что-то пошло не так: {str(e)}")
+) -> ReservationResponseSchema:
+    """
+    Создать новую бронь. Время должно быть в ISO формате с таймзоной (например: 2025-01-01T00:00:01Z), без миллисекунд
+    """
+    return await service.create_reservation(reservation)
 
 
 @router.delete(
     "/{reservation_id}",
-    response_model=Dict[str, str],
+    status_code=204,
     summary="Удалить бронь по ID",
     responses={
+        204: {"description": "Успешное удаление"},
         404: {"description": "Бронь не найдена"},
+        422: {
+            "description": "Некорректные данные",
+            "model": ValidationErrorResponseSchema,
+        },
+        500: {"description": "Внутренняя ошибка сервера", "model": ResponseSchema},
     },
 )
 async def delete_reservation(
     reservation_id: int,
     service: ReservationAsyncService = Depends(get_reservation_async_service),
-):
+) -> None:
     """Удалить бронь по ID"""
-    try:
-        await service.delete_reservation(reservation_id)
-        return {"message": "Бронь успешно удалена"}
-    except DomainException as e:
-        if e.code == NotFoundException.code:
-            status_code = 404
-        else:
-            status_code = 400
-        raise HTTPException(status_code=status_code, detail=e.details)
-    except Exception as e:
-        #TODO Настроить логирование ошибок + тех, что выше
-        raise HTTPException(status_code=400, detail="Что-то пошло не так")
+    await service.delete_reservation(reservation_id)

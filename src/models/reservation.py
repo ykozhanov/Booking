@@ -1,5 +1,4 @@
 from sqlalchemy import ForeignKey, CheckConstraint
-from sqlalchemy.types import TIMESTAMP
 from sqlalchemy.orm import Mapped, mapped_column
 from datetime import datetime
 from src.core.db import Base
@@ -10,7 +9,7 @@ class Reservation(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     customer_name: Mapped[str]
-    reservation_time: Mapped[datetime] = mapped_column(type_=TIMESTAMP(timezone=True))
+    reservation_time: Mapped[datetime]
     duration_minutes: Mapped[int] = mapped_column(
         CheckConstraint("duration_minutes > 0")
     )
