@@ -1,14 +1,10 @@
 from abc import ABC, abstractmethod
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.models import Reservation, Table
-from src.exceptions import (
-    ReservationNotFoundException,
-    ReservationConflictException,
-    TableNotFoundException,
-)
+from src.models import Reservation
+from src.exceptions import ReservationNotFoundException
 from sqlalchemy import select, func, DateTime, Interval
-from datetime import timedelta
+from datetime import timedelta, datetime
 from src.schemas import (
     ReservationCreateSchema,
     ReservationUpdateSchema,
@@ -23,7 +19,12 @@ class ReservationAsyncRepositoryInterface(ABC):
 
     @abstractmethod
     async def get_by_id(self, reservation_id: int) -> Reservation:
-        """Найти бронь по ID. Выбрасывает исключение ReservationNotFoundException если не найдена."""
+        """Получить бронь по ID. Выбрасывает исключение ReservationNotFoundException если не найдена."""
+        pass
+
+    @abstractmethod
+    async def get_by_table_id(self, table_id: int) -> list[Reservation]:
+        """Получить все брони для столика"""
         pass
 
     @abstractmethod
@@ -41,37 +42,44 @@ class ReservationAsyncRepositoryInterface(ABC):
         """Удалить бронь по ID."""
         pass
 
+    @abstractmethod
+    async def get_reservations_for_table_by_time(
+        self, table_id: int, reservation_time: datetime, duration_minutes: int
+    ) -> list[Reservation]:
+        """Получить все брони для столика в указанный период"""
+        pass
+
 
 class SQLAlchemyAsyncReservationRepository(ReservationAsyncRepositoryInterface):
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def _check_reservations_for_table_by_time(
-        self, reservation: ReservationCreateSchema
-    ) -> None:
-        new_start = reservation.reservation_time
-        new_end = new_start + timedelta(minutes=reservation.duration_minutes)
+    async def get_reservations_for_table_by_time(
+        self, table_id: int, reservation_time: datetime, duration_minutes: int
+    ) -> list[Reservation]:
+        end_time = reservation_time + timedelta(minutes=duration_minutes)
+
         result = await self.session.execute(
             select(Reservation).filter(
-                Reservation.table_id == reservation.table_id,
-                Reservation.reservation_time < func.cast(new_end, DateTime(timezone=True)),
-                func.cast(Reservation.reservation_time, DateTime(timezone=True)) +
-                func.cast(timedelta(minutes=reservation.duration_minutes), Interval) >
-                func.cast(reservation.reservation_time, DateTime(timezone=True))
+                Reservation.table_id == table_id,
+                Reservation.reservation_time
+                < func.cast(end_time, DateTime(timezone=True)),
+                func.cast(Reservation.reservation_time, DateTime(timezone=True))
+                + func.cast(timedelta(minutes=duration_minutes), Interval)
+                > func.cast(reservation_time, DateTime(timezone=True)),
             )
         )
-        if result.scalars().first():
-            raise ReservationConflictException()
+        return list(result.scalars().all())
 
-    async def _check_exists_table_by_id(self, table_id: int) -> None:
-        result = await self.session.execute(select(Table).filter(Table.id == table_id))
-        table = result.scalars().first()
-        if not table:
-            raise TableNotFoundException()
+    async def get_by_table_id(self, table_id: int) -> list[Reservation]:
+        reservations = await self.session.execute(
+            select(Reservation).filter(Reservation.table_id == table_id)
+        )
+        return list(reservations.scalars().all())
 
     async def create(self, reservation: ReservationCreateSchema) -> Reservation:
-        await self._check_exists_table_by_id(reservation.table_id)
-        await self._check_reservations_for_table_by_time(reservation)
+        # await self._check_exists_table_by_id(reservation.table_id)
+        # await self._check_reservations_for_table_by_time(reservation)
         new_reservation = Reservation(
             customer_name=reservation.customer_name,
             reservation_time=reservation.reservation_time,
@@ -103,17 +111,6 @@ class SQLAlchemyAsyncReservationRepository(ReservationAsyncRepositoryInterface):
 
     async def update(self, update_reservation: ReservationUpdateSchema) -> Reservation:
         reservation = await self.get_by_id(update_reservation.reservation_id)
-
-        temp_reservation = ReservationCreateSchema(
-            customer_name=update_reservation.customer_name or reservation.customer_name,
-            table_id=update_reservation.table_id or reservation.table_id,
-            reservation_time=update_reservation.reservation_time
-            or reservation.reservation_time,
-            duration_minutes=update_reservation.duration_minutes
-            or reservation.duration_minutes,
-        )
-
-        await self._check_reservations_for_table_by_time(temp_reservation)
 
         if update_reservation.customer_name:
             reservation.customer_name = update_reservation.customer_name

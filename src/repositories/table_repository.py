@@ -56,17 +56,9 @@ class SQLAlchemyAsyncTableRepository(TableAsyncRepositoryInterface):
         tables = list(result.scalars().all())
         return tables
 
-    async def _check_table_has_reservations(self, table_id: int) -> None:
-        """Проверка на наличие брони у столика. Если столик имеет бронь, выбросит исключение DeletedException."""
-        reservations = await self.session.execute(
-            select(Reservation).filter(Reservation.table_id == table_id)
-        )
-        if reservations.scalars().first():
-            raise TableDeletedException("Нельзя удалить стол пока у него есть бронь")
 
     async def delete(self, table_id: int) -> None:
         table = await self.get_by_id(table_id)
-        await self._check_table_has_reservations(table_id)
         await self.session.delete(table)
         await self.session.commit()
 

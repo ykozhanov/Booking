@@ -13,11 +13,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 def get_table_async_service(
     db: AsyncSession = Depends(get_session),
 ) -> TableAsyncService:
-    return TableAsyncService(SQLAlchemyAsyncTableRepository(db))
+    table_repository = SQLAlchemyAsyncTableRepository(db)
+    reservation_repository = SQLAlchemyAsyncReservationRepository(db)
+    return TableAsyncService(table_repository, reservation_repository)
 
 
 # Зависимость для сервиса бронирований
 def get_reservation_async_service(
     db: AsyncSession = Depends(get_session),
 ) -> ReservationAsyncService:
-    return ReservationAsyncService(SQLAlchemyAsyncReservationRepository(db))
+    table_repository = SQLAlchemyAsyncTableRepository(db)
+    reservation_repository = SQLAlchemyAsyncReservationRepository(db)
+    return ReservationAsyncService(reservation_repository, table_repository)
