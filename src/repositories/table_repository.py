@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from src.models import Table, Reservation
-from src.exceptions import TableNotFoundException, TableDeletedException
+from src.models import Table
+from src.exceptions import TableNotFoundException
 from src.schemas import TableCreateSchema, TableUpdateSchema
 
 

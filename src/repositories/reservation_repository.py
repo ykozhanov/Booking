@@ -78,8 +78,6 @@ class SQLAlchemyAsyncReservationRepository(ReservationAsyncRepositoryInterface):
         return list(reservations.scalars().all())
 
     async def create(self, reservation: ReservationCreateSchema) -> Reservation:
-        # await self._check_exists_table_by_id(reservation.table_id)
-        # await self._check_reservations_for_table_by_time(reservation)
         new_reservation = Reservation(
             customer_name=reservation.customer_name,
             reservation_time=reservation.reservation_time,
